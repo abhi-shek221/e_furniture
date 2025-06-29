@@ -1,10 +1,17 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Link } from "react-router-dom"
-import { FaUsers, FaBox, FaShoppingCart, FaDollarSign, FaTrendingUp, FaTrendingDown } from "react-icons/fa"
-import api from "../../services/api"
-import "./AdminDashboard.css"
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import {
+  FaUsers,
+  FaBox,
+  FaShoppingCart,
+  FaDollarSign,
+  FaArrowUp,
+  FaArrowDown,
+} from "react-icons/fa";
+import api from "../../services/api";
+import "./AdminDashboard.css";
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({
@@ -14,12 +21,12 @@ const AdminDashboard = () => {
     totalRevenue: 0,
     recentOrders: [],
     topProducts: [],
-  })
-  const [loading, setLoading] = useState(true)
+  });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchDashboardData()
-  }, [])
+    fetchDashboardData();
+  }, []);
 
   const fetchDashboardData = async () => {
     try {
@@ -28,10 +35,13 @@ const AdminDashboard = () => {
         api.get("/users?limit=1"),
         api.get("/products?limit=1"),
         api.get("/orders?limit=5"),
-      ])
+      ]);
 
       // Calculate total revenue from recent orders
-      const totalRevenue = ordersRes.data.orders.reduce((sum, order) => sum + order.totalPrice, 0)
+      const totalRevenue = ordersRes.data.orders.reduce(
+        (sum, order) => sum + order.totalPrice,
+        0
+      );
 
       setStats({
         totalUsers: usersRes.data.pagination.totalUsers,
@@ -39,45 +49,45 @@ const AdminDashboard = () => {
         totalOrders: ordersRes.data.pagination.totalOrders,
         totalRevenue: totalRevenue,
         recentOrders: ordersRes.data.orders,
-      })
+      });
     } catch (error) {
-      console.error("Error fetching dashboard data:", error)
+      console.error("Error fetching dashboard data:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
-    }).format(amount)
-  }
+    }).format(amount);
+  };
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
-    })
-  }
+    });
+  };
 
   const getStatusBadgeClass = (status) => {
     switch (status) {
       case "pending":
-        return "badge-warning"
+        return "badge-warning";
       case "processing":
-        return "badge-info"
+        return "badge-info";
       case "shipped":
-        return "badge-primary"
+        return "badge-primary";
       case "delivered":
-        return "badge-success"
+        return "badge-success";
       case "cancelled":
-        return "badge-danger"
+        return "badge-danger";
       default:
-        return "badge-secondary"
+        return "badge-secondary";
     }
-  }
+  };
 
   if (loading) {
     return (
@@ -86,7 +96,7 @@ const AdminDashboard = () => {
           <div className="loading">Loading dashboard...</div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -107,7 +117,7 @@ const AdminDashboard = () => {
               <h3>{stats.totalUsers}</h3>
               <p>Total Users</p>
               <div className="stat-trend positive">
-                <FaTrendingUp /> +12% from last month
+                <FaArrowUp /> +12% from last month
               </div>
             </div>
           </div>
@@ -120,7 +130,7 @@ const AdminDashboard = () => {
               <h3>{stats.totalProducts}</h3>
               <p>Total Products</p>
               <div className="stat-trend positive">
-                <FaTrendingUp /> +8% from last month
+                <FaArrowUp /> +8% from last month
               </div>
             </div>
           </div>
@@ -133,7 +143,7 @@ const AdminDashboard = () => {
               <h3>{stats.totalOrders}</h3>
               <p>Total Orders</p>
               <div className="stat-trend negative">
-                <FaTrendingDown /> -3% from last month
+                <FaArrowDown /> -3% from last month
               </div>
             </div>
           </div>
@@ -146,7 +156,7 @@ const AdminDashboard = () => {
               <h3>{formatCurrency(stats.totalRevenue)}</h3>
               <p>Total Revenue</p>
               <div className="stat-trend positive">
-                <FaTrendingUp /> +15% from last month
+                <FaArrowUp /> +15% from last month
               </div>
             </div>
           </div>
@@ -199,15 +209,26 @@ const AdminDashboard = () => {
                 </div>
                 {stats.recentOrders.map((order) => (
                   <div key={order._id} className="table-row">
-                    <div className="order-id">#{order._id.slice(-8).toUpperCase()}</div>
-                    <div className="customer-name">{order.user?.name || "Unknown"}</div>
-                    <div className="order-date">{formatDate(order.createdAt)}</div>
+                    <div className="order-id">
+                      #{order._id.slice(-8).toUpperCase()}
+                    </div>
+                    <div className="customer-name">
+                      {order.user?.name || "Unknown"}
+                    </div>
+                    <div className="order-date">
+                      {formatDate(order.createdAt)}
+                    </div>
                     <div className="order-status">
-                      <span className={`badge ${getStatusBadgeClass(order.status)}`}>
-                        {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                      <span
+                        className={`badge ${getStatusBadgeClass(order.status)}`}
+                      >
+                        {order.status.charAt(0).toUpperCase() +
+                          order.status.slice(1)}
                       </span>
                     </div>
-                    <div className="order-total">{formatCurrency(order.totalPrice)}</div>
+                    <div className="order-total">
+                      {formatCurrency(order.totalPrice)}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -216,7 +237,7 @@ const AdminDashboard = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default AdminDashboard
+export default AdminDashboard;
