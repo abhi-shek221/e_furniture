@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom"
+import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin, FaPhone, FaEnvelope, FaMapMarkerAlt } from "react-icons/fa"
 import "./Footer.css"
 
 const Footer = () => {
@@ -8,7 +9,24 @@ const Footer = () => {
         <div className="footer-content">
           <div className="footer-section">
             <h3>FurnitureStore</h3>
-            <p>Your one-stop destination for quality furniture at affordable prices.</p>
+            <p>
+              Your one-stop destination for quality furniture. We provide premium furniture pieces that combine style,
+              comfort, and durability.
+            </p>
+            <div className="social-links">
+              <a href="#" aria-label="Facebook">
+                <FaFacebook />
+              </a>
+              <a href="#" aria-label="Twitter">
+                <FaTwitter />
+              </a>
+              <a href="#" aria-label="Instagram">
+                <FaInstagram />
+              </a>
+              <a href="#" aria-label="LinkedIn">
+                <FaLinkedin />
+              </a>
+            </div>
           </div>
 
           <div className="footer-section">
@@ -24,10 +42,13 @@ const Footer = () => {
                 <Link to="/products?category=sofa">Sofas</Link>
               </li>
               <li>
-                <Link to="/products?category=bed">Beds</Link>
+                <Link to="/products?category=chair">Chairs</Link>
               </li>
               <li>
                 <Link to="/products?category=table">Tables</Link>
+              </li>
+              <li>
+                <Link to="/products?category=bed">Beds</Link>
               </li>
             </ul>
           </div>
@@ -36,32 +57,54 @@ const Footer = () => {
             <h4>Customer Service</h4>
             <ul>
               <li>
-                <a href="#contact">Contact Us</a>
+                <Link to="/contact">Contact Us</Link>
               </li>
               <li>
-                <a href="#shipping">Shipping Info</a>
+                <Link to="/shipping">Shipping Info</Link>
               </li>
               <li>
-                <a href="#returns">Returns</a>
+                <Link to="/returns">Returns</Link>
               </li>
               <li>
-                <a href="#faq">FAQ</a>
+                <Link to="/faq">FAQ</Link>
+              </li>
+              <li>
+                <Link to="/size-guide">Size Guide</Link>
+              </li>
+              <li>
+                <Link to="/care-instructions">Care Instructions</Link>
               </li>
             </ul>
           </div>
 
           <div className="footer-section">
-            <h4>Connect With Us</h4>
-            <div className="social-links">
-              <a href="#facebook">Facebook</a>
-              <a href="#twitter">Twitter</a>
-              <a href="#instagram">Instagram</a>
+            <h4>Contact Info</h4>
+            <div className="contact-info">
+              <div className="contact-item">
+                <FaMapMarkerAlt />
+                <span>123 Furniture Street, City, State 12345</span>
+              </div>
+              <div className="contact-item">
+                <FaPhone />
+                <span>+1 (555) 123-4567</span>
+              </div>
+              <div className="contact-item">
+                <FaEnvelope />
+                <span>info@furniturestore.com</span>
+              </div>
             </div>
           </div>
         </div>
 
         <div className="footer-bottom">
-          <p>&copy; 2024 FurnitureStore. All rights reserved.</p>
+          <div className="footer-bottom-content">
+            <p>&copy; 2024 FurnitureStore. All rights reserved.</p>
+            <div className="footer-links">
+              <Link to="/privacy">Privacy Policy</Link>
+              <Link to="/terms">Terms of Service</Link>
+              <Link to="/cookies">Cookie Policy</Link>
+            </div>
+          </div>
         </div>
       </div>
     </footer>

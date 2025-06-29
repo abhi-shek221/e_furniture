@@ -9,8 +9,8 @@ const auth = async (req, res, next) => {
       return res.status(401).json({ message: "No token, authorization denied" })
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET)
-    const user = await User.findById(decoded.id).select("-password")
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || "fallback_secret")
+    const user = await User.findById(decoded.userId).select("-password")
 
     if (!user) {
       return res.status(401).json({ message: "Token is not valid" })
@@ -23,12 +23,18 @@ const auth = async (req, res, next) => {
   }
 }
 
-const admin = (req, res, next) => {
-  if (req.user && req.user.role === "admin") {
-    next()
-  } else {
-    res.status(403).json({ message: "Not authorized as admin" })
+const adminAuth = async (req, res, next) => {
+  try {
+    await auth(req, res, () => {
+      if (req.user && req.user.isAdmin) {
+        next()
+      } else {
+        res.status(403).json({ message: "Admin access required" })
+      }
+    })
+  } catch (error) {
+    res.status(401).json({ message: "Authorization failed" })
   }
 }
 
-module.exports = { auth, admin }
+module.exports = { auth, adminAuth }

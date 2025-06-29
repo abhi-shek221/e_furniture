@@ -6,10 +6,22 @@ const AdminRoute = ({ children }) => {
   const { isAuthenticated, user, loading } = useAuth()
 
   if (loading) {
-    return <div className="loading">Loading...</div>
+    return (
+      <div className="loading">
+        <div>Loading...</div>
+      </div>
+    )
   }
 
-  return isAuthenticated && user?.role === "admin" ? children : <Navigate to="/" />
+  if (!isAuthenticated) {
+    return <Navigate to="/login" />
+  }
+
+  if (!user?.isAdmin) {
+    return <Navigate to="/" />
+  }
+
+  return children
 }
 
 export default AdminRoute

@@ -10,18 +10,18 @@ const orderItemSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  quantity: {
-    type: Number,
+  image: {
+    type: String,
     required: true,
-    min: 1,
   },
   price: {
     type: Number,
     required: true,
   },
-  image: {
-    type: String,
+  quantity: {
+    type: Number,
     required: true,
+    min: 1,
   },
 })
 
@@ -34,21 +34,47 @@ const orderSchema = new mongoose.Schema(
     },
     orderItems: [orderItemSchema],
     shippingAddress: {
-      address: { type: String, required: true },
-      city: { type: String, required: true },
-      postalCode: { type: String, required: true },
-      country: { type: String, required: true },
+      fullName: {
+        type: String,
+        required: true,
+      },
+      address: {
+        type: String,
+        required: true,
+      },
+      city: {
+        type: String,
+        required: true,
+      },
+      state: {
+        type: String,
+        required: true,
+      },
+      zipCode: {
+        type: String,
+        required: true,
+      },
+      country: {
+        type: String,
+        required: true,
+      },
+      phone: String,
     },
     paymentMethod: {
       type: String,
       required: true,
-      default: "PayPal",
+      enum: ["paypal", "stripe", "cod"],
     },
     paymentResult: {
       id: String,
       status: String,
-      update_time: String,
-      email_address: String,
+      updateTime: String,
+      emailAddress: String,
+    },
+    itemsPrice: {
+      type: Number,
+      required: true,
+      default: 0.0,
     },
     taxPrice: {
       type: Number,
@@ -67,7 +93,6 @@ const orderSchema = new mongoose.Schema(
     },
     isPaid: {
       type: Boolean,
-      required: true,
       default: false,
     },
     paidAt: {
@@ -75,7 +100,6 @@ const orderSchema = new mongoose.Schema(
     },
     isDelivered: {
       type: Boolean,
-      required: true,
       default: false,
     },
     deliveredAt: {
@@ -86,6 +110,7 @@ const orderSchema = new mongoose.Schema(
       enum: ["pending", "processing", "shipped", "delivered", "cancelled"],
       default: "pending",
     },
+    notes: String,
   },
   {
     timestamps: true,

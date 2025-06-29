@@ -5,22 +5,28 @@ import api from "../services/api"
 
 const AuthContext = createContext()
 
+const initialState = {
+  user: null,
+  token: localStorage.getItem("token"),
+  isAuthenticated: false,
+  loading: true,
+}
+
 const authReducer = (state, action) => {
   switch (action.type) {
+    case "USER_LOADED":
+      return {
+        ...state,
+        isAuthenticated: true,
+        loading: false,
+        user: action.payload,
+      }
     case "LOGIN_SUCCESS":
     case "REGISTER_SUCCESS":
       localStorage.setItem("token", action.payload.token)
       return {
         ...state,
-        token: action.payload.token,
-        user: action.payload,
-        isAuthenticated: true,
-        loading: false,
-      }
-    case "USER_LOADED":
-      return {
-        ...state,
-        user: action.payload,
+        ...action.payload,
         isAuthenticated: true,
         loading: false,
       }
@@ -32,14 +38,14 @@ const authReducer = (state, action) => {
       return {
         ...state,
         token: null,
-        user: null,
         isAuthenticated: false,
         loading: false,
+        user: null,
       }
-    case "SET_LOADING":
+    case "CLEAR_ERRORS":
       return {
         ...state,
-        loading: true,
+        error: null,
       }
     default:
       return state
@@ -47,12 +53,7 @@ const authReducer = (state, action) => {
 }
 
 export const AuthProvider = ({ children }) => {
-  const [state, dispatch] = useReducer(authReducer, {
-    token: localStorage.getItem("token"),
-    user: null,
-    isAuthenticated: false,
-    loading: true,
-  })
+  const [state, dispatch] = useReducer(authReducer, initialState)
 
   // Load user
   const loadUser = async () => {
@@ -64,7 +65,7 @@ export const AuthProvider = ({ children }) => {
       const res = await api.get("/auth/me")
       dispatch({
         type: "USER_LOADED",
-        payload: res.data,
+        payload: res.data.user,
       })
     } catch (err) {
       dispatch({ type: "AUTH_ERROR" })
@@ -74,7 +75,6 @@ export const AuthProvider = ({ children }) => {
   // Register user
   const register = async (formData) => {
     try {
-      dispatch({ type: "SET_LOADING" })
       const res = await api.post("/auth/register", formData)
       dispatch({
         type: "REGISTER_SUCCESS",
@@ -83,18 +83,18 @@ export const AuthProvider = ({ children }) => {
       loadUser()
       return { success: true }
     } catch (err) {
-      dispatch({ type: "REGISTER_FAIL" })
-      return {
-        success: false,
-        message: err.response?.data?.message || "Registration failed",
-      }
+      const error = err.response?.data?.message || "Registration failed"
+      dispatch({
+        type: "REGISTER_FAIL",
+        payload: error,
+      })
+      return { success: false, error }
     }
   }
 
   // Login user
   const login = async (formData) => {
     try {
-      dispatch({ type: "SET_LOADING" })
       const res = await api.post("/auth/login", formData)
       dispatch({
         type: "LOGIN_SUCCESS",
@@ -103,17 +103,23 @@ export const AuthProvider = ({ children }) => {
       loadUser()
       return { success: true }
     } catch (err) {
-      dispatch({ type: "LOGIN_FAIL" })
-      return {
-        success: false,
-        message: err.response?.data?.message || "Login failed",
-      }
+      const error = err.response?.data?.message || "Login failed"
+      dispatch({
+        type: "LOGIN_FAIL",
+        payload: error,
+      })
+      return { success: false, error }
     }
   }
 
   // Logout
   const logout = () => {
     dispatch({ type: "LOGOUT" })
+  }
+
+  // Clear errors
+  const clearErrors = () => {
+    dispatch({ type: "CLEAR_ERRORS" })
   }
 
   useEffect(() => {
@@ -127,6 +133,7 @@ export const AuthProvider = ({ children }) => {
         register,
         login,
         logout,
+        clearErrors,
         loadUser,
       }}
     >

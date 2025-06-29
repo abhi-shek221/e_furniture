@@ -13,16 +13,16 @@ const userSchema = new mongoose.Schema(
       required: true,
       unique: true,
       lowercase: true,
+      trim: true,
     },
     password: {
       type: String,
       required: true,
       minlength: 6,
     },
-    role: {
+    phone: {
       type: String,
-      enum: ["user", "admin"],
-      default: "user",
+      trim: true,
     },
     address: {
       street: String,
@@ -31,7 +31,10 @@ const userSchema = new mongoose.Schema(
       zipCode: String,
       country: String,
     },
-    phone: String,
+    isAdmin: {
+      type: Boolean,
+      default: false,
+    },
     wishlist: [
       {
         type: mongoose.Schema.Types.ObjectId,

@@ -43,51 +43,102 @@ const productSchema = new mongoose.Schema(
       required: true,
       min: 0,
     },
+    originalPrice: {
+      type: Number,
+      min: 0,
+    },
     category: {
       type: String,
       required: true,
-      enum: ["sofa", "bed", "table", "chair", "cabinet", "desk", "other"],
+      enum: ["sofa", "chair", "table", "bed", "cabinet", "desk", "bookshelf", "other"],
     },
-    images: [
-      {
-        type: String,
-        required: true,
-      },
-    ],
+    subcategory: {
+      type: String,
+      trim: true,
+    },
     brand: {
       type: String,
-      required: true,
+      trim: true,
     },
-    countInStock: {
-      type: Number,
-      required: true,
-      min: 0,
+    material: {
+      type: String,
+      trim: true,
     },
-    rating: {
-      type: Number,
-      default: 0,
-    },
-    numReviews: {
-      type: Number,
-      default: 0,
-    },
-    reviews: [reviewSchema],
-    featured: {
-      type: Boolean,
-      default: false,
+    color: {
+      type: String,
+      trim: true,
     },
     dimensions: {
       length: Number,
       width: Number,
       height: Number,
+      unit: {
+        type: String,
+        default: "cm",
+      },
     },
-    weight: Number,
-    material: String,
-    color: String,
+    weight: {
+      value: Number,
+      unit: {
+        type: String,
+        default: "kg",
+      },
+    },
+    images: [
+      {
+        url: {
+          type: String,
+          required: true,
+        },
+        alt: String,
+      },
+    ],
+    stock: {
+      type: Number,
+      required: true,
+      min: 0,
+      default: 0,
+    },
+    isAvailable: {
+      type: Boolean,
+      default: true,
+    },
+    isFeatured: {
+      type: Boolean,
+      default: false,
+    },
+    tags: [String],
+    reviews: [reviewSchema],
+    rating: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 5,
+    },
+    numReviews: {
+      type: Number,
+      default: 0,
+    },
+    salesCount: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,
   },
 )
+
+// Calculate average rating
+productSchema.methods.calculateAverageRating = function () {
+  if (this.reviews.length === 0) {
+    this.rating = 0
+    this.numReviews = 0
+  } else {
+    const totalRating = this.reviews.reduce((sum, review) => sum + review.rating, 0)
+    this.rating = totalRating / this.reviews.length
+    this.numReviews = this.reviews.length
+  }
+}
 
 module.exports = mongoose.model("Product", productSchema)

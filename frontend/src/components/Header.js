@@ -2,52 +2,61 @@
 
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
+import { FaShoppingCart, FaUser, FaHeart, FaSearch, FaBars, FaTimes } from "react-icons/fa"
 import { useAuth } from "../context/AuthContext"
 import { useCart } from "../context/CartContext"
 import "./Header.css"
 
 const Header = () => {
-  const { user, isAuthenticated, logout } = useAuth()
-  const { getCartItemsCount } = useCart()
-  const navigate = useNavigate()
-  const [searchTerm, setSearchTerm] = useState("")
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-
-  const handleSearch = (e) => {
-    e.preventDefault()
-    if (searchTerm.trim()) {
-      navigate(`/products?search=${searchTerm}`)
-      setSearchTerm("")
-    }
-  }
+  const [searchQuery, setSearchQuery] = useState("")
+  const { user, isAuthenticated, logout } = useAuth()
+  const { cartItems } = useCart()
+  const navigate = useNavigate()
 
   const handleLogout = () => {
     logout()
     navigate("/")
   }
 
+  const handleSearch = (e) => {
+    e.preventDefault()
+    if (searchQuery.trim()) {
+      navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`)
+      setSearchQuery("")
+    }
+  }
+
+  const cartItemsCount = cartItems.reduce((total, item) => total + item.quantity, 0)
+
   return (
     <header className="header">
       <div className="container">
         <div className="header-content">
+          {/* Logo */}
           <Link to="/" className="logo">
             <h2>FurnitureStore</h2>
           </Link>
 
+          {/* Search Bar */}
           <form className="search-form" onSubmit={handleSearch}>
             <input
               type="text"
               placeholder="Search furniture..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="search-input"
             />
             <button type="submit" className="search-btn">
-              Search
+              <FaSearch />
             </button>
           </form>
 
+          {/* Navigation */}
           <nav className={`nav ${isMenuOpen ? "nav-open" : ""}`}>
+            <Link to="/" className="nav-link">
+              Home
+            </Link>
             <Link to="/products" className="nav-link">
               Products
             </Link>
@@ -55,17 +64,27 @@ const Header = () => {
             {isAuthenticated ? (
               <>
                 <Link to="/wishlist" className="nav-link">
-                  Wishlist
+                  <FaHeart /> Wishlist
                 </Link>
                 <Link to="/orders" className="nav-link">
                   Orders
                 </Link>
-                <div className="dropdown">
-                  <button className="dropdown-btn">{user?.name} ▼</button>
-                  <div className="dropdown-content">
-                    <Link to="/profile">Profile</Link>
-                    {user?.role === "admin" && <Link to="/admin">Admin Dashboard</Link>}
-                    <button onClick={handleLogout}>Logout</button>
+                {user?.isAdmin && (
+                  <Link to="/admin" className="nav-link admin-link">
+                    Admin
+                  </Link>
+                )}
+                <div className="user-menu">
+                  <span className="nav-link">
+                    <FaUser /> {user?.name}
+                  </span>
+                  <div className="dropdown">
+                    <Link to="/profile" className="dropdown-item">
+                      Profile
+                    </Link>
+                    <button onClick={handleLogout} className="dropdown-item">
+                      Logout
+                    </button>
                   </div>
                 </div>
               </>
@@ -80,13 +99,15 @@ const Header = () => {
               </>
             )}
 
-            <Link to="/cart" className="cart-link">
-              Cart ({getCartItemsCount()})
+            <Link to="/cart" className="nav-link cart-link">
+              <FaShoppingCart />
+              <span className="cart-count">{cartItemsCount}</span>
             </Link>
           </nav>
 
-          <button className="menu-toggle" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-            ☰
+          {/* Mobile Menu Toggle */}
+          <button className="mobile-menu-toggle" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+            {isMenuOpen ? <FaTimes /> : <FaBars />}
           </button>
         </div>
       </div>

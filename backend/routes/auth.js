@@ -6,19 +6,12 @@ const { auth } = require("../middleware/auth")
 
 const router = express.Router()
 
-// Generate JWT Token
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "30d" })
-}
-
-// @route   POST /api/auth/register
-// @desc    Register user
-// @access  Public
+// Register user
 router.post(
   "/register",
   [
-    body("name").notEmpty().withMessage("Name is required"),
-    body("email").isEmail().withMessage("Please include a valid email"),
+    body("name").trim().isLength({ min: 2 }).withMessage("Name must be at least 2 characters"),
+    body("email").isEmail().withMessage("Please enter a valid email"),
     body("password").isLength({ min: 6 }).withMessage("Password must be at least 6 characters"),
   ],
   async (req, res) => {
@@ -30,39 +23,46 @@ router.post(
 
       const { name, email, password } = req.body
 
-      // Check if user exists
-      let user = await User.findOne({ email })
-      if (user) {
-        return res.status(400).json({ message: "User already exists" })
+      // Check if user already exists
+      const existingUser = await User.findOne({ email })
+      if (existingUser) {
+        return res.status(400).json({ message: "User already exists with this email" })
       }
 
-      // Create user
-      user = new User({ name, email, password })
+      // Create new user
+      const user = new User({
+        name,
+        email,
+        password,
+      })
+
       await user.save()
 
-      const token = generateToken(user._id)
+      // Generate JWT token
+      const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET || "fallback_secret", { expiresIn: "7d" })
 
       res.status(201).json({
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
+        message: "User registered successfully",
         token,
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          isAdmin: user.isAdmin,
+        },
       })
     } catch (error) {
-      console.error(error.message)
-      res.status(500).send("Server error")
+      console.error("Registration error:", error)
+      res.status(500).json({ message: "Server error during registration" })
     }
   },
 )
 
-// @route   POST /api/auth/login
-// @desc    Authenticate user & get token
-// @access  Public
+// Login user
 router.post(
   "/login",
   [
-    body("email").isEmail().withMessage("Please include a valid email"),
+    body("email").isEmail().withMessage("Please enter a valid email"),
     body("password").exists().withMessage("Password is required"),
   ],
   async (req, res) => {
@@ -74,7 +74,7 @@ router.post(
 
       const { email, password } = req.body
 
-      // Check for user
+      // Find user by email
       const user = await User.findOne({ email })
       if (!user) {
         return res.status(400).json({ message: "Invalid credentials" })
@@ -86,32 +86,43 @@ router.post(
         return res.status(400).json({ message: "Invalid credentials" })
       }
 
-      const token = generateToken(user._id)
+      // Generate JWT token
+      const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET || "fallback_secret", { expiresIn: "7d" })
 
       res.json({
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
+        message: "Login successful",
         token,
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          isAdmin: user.isAdmin,
+        },
       })
     } catch (error) {
-      console.error(error.message)
-      res.status(500).send("Server error")
+      console.error("Login error:", error)
+      res.status(500).json({ message: "Server error during login" })
     }
   },
 )
 
-// @route   GET /api/auth/me
-// @desc    Get current user
-// @access  Private
+// Get current user
 router.get("/me", auth, async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).select("-password")
-    res.json(user)
+    res.json({
+      user: {
+        id: req.user._id,
+        name: req.user.name,
+        email: req.user.email,
+        phone: req.user.phone,
+        address: req.user.address,
+        isAdmin: req.user.isAdmin,
+        wishlist: req.user.wishlist,
+      },
+    })
   } catch (error) {
-    console.error(error.message)
-    res.status(500).send("Server error")
+    console.error("Get user error:", error)
+    res.status(500).json({ message: "Server error" })
   }
 })
 

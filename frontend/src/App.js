@@ -1,6 +1,14 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom"
+import { ToastContainer } from "react-toastify"
+import "react-toastify/dist/ReactToastify.css"
+
+// Components
 import Header from "./components/Header"
 import Footer from "./components/Footer"
+import ProtectedRoute from "./components/ProtectedRoute"
+import AdminRoute from "./components/AdminRoute"
+
+// Pages
 import Home from "./pages/Home"
 import Products from "./pages/Products"
 import ProductDetail from "./pages/ProductDetail"
@@ -12,12 +20,12 @@ import Profile from "./pages/Profile"
 import Orders from "./pages/Orders"
 import OrderDetail from "./pages/OrderDetail"
 import Wishlist from "./pages/Wishlist"
+
+// Admin Pages
 import AdminDashboard from "./pages/admin/AdminDashboard"
 import AdminProducts from "./pages/admin/AdminProducts"
 import AdminOrders from "./pages/admin/AdminOrders"
 import AdminUsers from "./pages/admin/AdminUsers"
-import ProtectedRoute from "./components/ProtectedRoute"
-import AdminRoute from "./components/AdminRoute"
 
 function App() {
   return (
@@ -111,6 +119,17 @@ function App() {
           </Routes>
         </main>
         <Footer />
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+        />
       </div>
     </Router>
   )

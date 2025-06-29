@@ -7,100 +7,145 @@ import api from "../services/api"
 import "./Products.css"
 
 const Products = () => {
-  const [searchParams, setSearchParams] = useSearchParams()
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
-  const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
-  const [totalProducts, setTotalProducts] = useState(0)
+  const [error, setError] = useState("")
+  const [categories, setCategories] = useState([])
+  const [pagination, setPagination] = useState({})
+  const [searchParams, setSearchParams] = useSearchParams()
 
   // Filter states
   const [filters, setFilters] = useState({
-    category: searchParams.get("category") || "all",
+    category: searchParams.get("category") || "",
     search: searchParams.get("search") || "",
     minPrice: searchParams.get("minPrice") || "",
     maxPrice: searchParams.get("maxPrice") || "",
-    rating: searchParams.get("rating") || "",
-    sort: searchParams.get("sort") || "newest",
+    sortBy: searchParams.get("sortBy") || "newest",
+    inStock: searchParams.get("inStock") === "true",
+    page: Number.parseInt(searchParams.get("page")) || 1,
   })
-
-  const categories = ["all", "sofa", "bed", "table", "chair", "cabinet", "desk", "other"]
-  const sortOptions = [
-    { value: "newest", label: "Newest First" },
-    { value: "price-low", label: "Price: Low to High" },
-    { value: "price-high", label: "Price: High to Low" },
-    { value: "rating", label: "Highest Rated" },
-  ]
 
   useEffect(() => {
     fetchProducts()
-  }, [searchParams, currentPage])
+    fetchCategories()
+  }, [searchParams])
 
   const fetchProducts = async () => {
+    setLoading(true)
     try {
-      setLoading(true)
       const params = new URLSearchParams()
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value) params.append(key, value)
+      })
 
-      if (filters.category !== "all") params.append("category", filters.category)
-      if (filters.search) params.append("search", filters.search)
-      if (filters.minPrice) params.append("minPrice", filters.minPrice)
-      if (filters.maxPrice) params.append("maxPrice", filters.maxPrice)
-      if (filters.rating) params.append("rating", filters.rating)
-      if (filters.sort) params.append("sort", filters.sort)
-      params.append("page", currentPage)
-      params.append("limit", 12)
-
-      const response = await api.get(`/products?${params}`)
+      const response = await api.get(`/products?${params.toString()}`)
       setProducts(response.data.products)
-      setTotalPages(response.data.totalPages)
-      setTotalProducts(response.data.totalProducts)
+      setPagination(response.data.pagination)
     } catch (error) {
+      setError("Failed to load products")
       console.error("Error fetching products:", error)
     } finally {
       setLoading(false)
     }
   }
 
-  const handleFilterChange = (key, value) => {
-    const newFilters = { ...filters, [key]: value }
-    setFilters(newFilters)
-
-    // Update URL params
-    const newSearchParams = new URLSearchParams()
-    Object.entries(newFilters).forEach(([k, v]) => {
-      if (v && v !== "all") {
-        newSearchParams.set(k, v)
-      }
-    })
-    setSearchParams(newSearchParams)
-    setCurrentPage(1)
+  const fetchCategories = async () => {
+    try {
+      const response = await api.get("/products/categories")
+      setCategories(response.data)
+    } catch (error) {
+      console.error("Error fetching categories:", error)
+    }
   }
 
-  const clearFilters = () => {
-    const clearedFilters = {
-      category: "all",
-      search: "",
-      minPrice: "",
-      maxPrice: "",
-      rating: "",
-      sort: "newest",
-    }
-    setFilters(clearedFilters)
-    setSearchParams({})
-    setCurrentPage(1)
+  const handleFilterChange = (key, value) => {
+    const newFilters = { ...filters, [key]: value, page: 1 }
+    setFilters(newFilters)
+    updateSearchParams(newFilters)
+  }
+
+  const updateSearchParams = (newFilters) => {
+    const params = new URLSearchParams()
+    Object.entries(newFilters).forEach(([key, value]) => {
+      if (value && value !== false) {
+        params.set(key, value)
+      }
+    })
+    setSearchParams(params)
   }
 
   const handlePageChange = (page) => {
-    setCurrentPage(page)
+    const newFilters = { ...filters, page }
+    setFilters(newFilters)
+    updateSearchParams(newFilters)
     window.scrollTo({ top: 0, behavior: "smooth" })
+  }
+
+  const clearFilters = () => {
+    const newFilters = {
+      category: "",
+      search: "",
+      minPrice: "",
+      maxPrice: "",
+      sortBy: "newest",
+      inStock: false,
+      page: 1,
+    }
+    setFilters(newFilters)
+    setSearchParams({})
+  }
+
+  const renderPagination = () => {
+    if (!pagination.totalPages || pagination.totalPages <= 1) return null
+
+    const pages = []
+    const maxVisiblePages = 5
+    let startPage = Math.max(1, pagination.currentPage - Math.floor(maxVisiblePages / 2))
+    const endPage = Math.min(pagination.totalPages, startPage + maxVisiblePages - 1)
+
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1)
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(
+        <button
+          key={i}
+          onClick={() => handlePageChange(i)}
+          className={`pagination-btn ${i === pagination.currentPage ? "active" : ""}`}
+        >
+          {i}
+        </button>,
+      )
+    }
+
+    return (
+      <div className="pagination">
+        <button
+          onClick={() => handlePageChange(pagination.currentPage - 1)}
+          disabled={!pagination.hasPrev}
+          className="pagination-btn"
+        >
+          Previous
+        </button>
+        {pages}
+        <button
+          onClick={() => handlePageChange(pagination.currentPage + 1)}
+          disabled={!pagination.hasNext}
+          className="pagination-btn"
+        >
+          Next
+        </button>
+      </div>
+    )
   }
 
   return (
     <div className="products-page">
       <div className="container">
-        <div className="products-header">
+        <div className="page-header">
           <h1>Our Products</h1>
-          <p>Discover our wide range of quality furniture</p>
+          <p>Discover our wide range of quality furniture pieces</p>
         </div>
 
         <div className="products-content">
@@ -108,22 +153,35 @@ const Products = () => {
           <aside className="filters-sidebar">
             <div className="filters-header">
               <h3>Filters</h3>
-              <button onClick={clearFilters} className="clear-filters">
+              <button onClick={clearFilters} className="clear-filters-btn">
                 Clear All
               </button>
             </div>
 
+            {/* Search Filter */}
+            <div className="filter-group">
+              <label>Search</label>
+              <input
+                type="text"
+                value={filters.search}
+                onChange={(e) => handleFilterChange("search", e.target.value)}
+                placeholder="Search products..."
+                className="filter-input"
+              />
+            </div>
+
             {/* Category Filter */}
             <div className="filter-group">
-              <h4>Category</h4>
+              <label>Category</label>
               <select
                 value={filters.category}
                 onChange={(e) => handleFilterChange("category", e.target.value)}
-                className="form-control"
+                className="filter-select"
               >
+                <option value="">All Categories</option>
                 {categories.map((category) => (
                   <option key={category} value={category}>
-                    {category === "all" ? "All Categories" : category.charAt(0).toUpperCase() + category.slice(1)}
+                    {category.charAt(0).toUpperCase() + category.slice(1)}
                   </option>
                 ))}
               </select>
@@ -131,117 +189,93 @@ const Products = () => {
 
             {/* Price Range Filter */}
             <div className="filter-group">
-              <h4>Price Range</h4>
+              <label>Price Range</label>
               <div className="price-inputs">
                 <input
                   type="number"
-                  placeholder="Min"
                   value={filters.minPrice}
                   onChange={(e) => handleFilterChange("minPrice", e.target.value)}
-                  className="form-control"
+                  placeholder="Min"
+                  className="filter-input price-input"
                 />
+                <span>-</span>
                 <input
                   type="number"
-                  placeholder="Max"
                   value={filters.maxPrice}
                   onChange={(e) => handleFilterChange("maxPrice", e.target.value)}
-                  className="form-control"
+                  placeholder="Max"
+                  className="filter-input price-input"
                 />
               </div>
             </div>
 
-            {/* Rating Filter */}
+            {/* Stock Filter */}
             <div className="filter-group">
-              <h4>Minimum Rating</h4>
-              <select
-                value={filters.rating}
-                onChange={(e) => handleFilterChange("rating", e.target.value)}
-                className="form-control"
-              >
-                <option value="">Any Rating</option>
-                <option value="4">4+ Stars</option>
-                <option value="3">3+ Stars</option>
-                <option value="2">2+ Stars</option>
-                <option value="1">1+ Stars</option>
-              </select>
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={filters.inStock}
+                  onChange={(e) => handleFilterChange("inStock", e.target.checked)}
+                />
+                In Stock Only
+              </label>
             </div>
           </aside>
 
-          {/* Products Grid */}
+          {/* Products Section */}
           <main className="products-main">
-            <div className="products-toolbar">
+            {/* Sort and Results Info */}
+            <div className="products-header">
               <div className="results-info">
-                {totalProducts > 0 && (
+                {pagination.totalProducts > 0 ? (
                   <span>
-                    Showing {products.length} of {totalProducts} products
+                    Showing {(pagination.currentPage - 1) * 12 + 1}-
+                    {Math.min(pagination.currentPage * 12, pagination.totalProducts)} of {pagination.totalProducts}{" "}
+                    products
                   </span>
+                ) : (
+                  <span>No products found</span>
                 )}
               </div>
 
               <div className="sort-controls">
                 <label>Sort by:</label>
                 <select
-                  value={filters.sort}
-                  onChange={(e) => handleFilterChange("sort", e.target.value)}
-                  className="form-control"
+                  value={filters.sortBy}
+                  onChange={(e) => handleFilterChange("sortBy", e.target.value)}
+                  className="sort-select"
                 >
-                  {sortOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
+                  <option value="newest">Newest</option>
+                  <option value="price_asc">Price: Low to High</option>
+                  <option value="price_desc">Price: High to Low</option>
+                  <option value="rating">Highest Rated</option>
+                  <option value="popular">Most Popular</option>
                 </select>
               </div>
             </div>
 
+            {/* Products Grid */}
             {loading ? (
               <div className="loading">Loading products...</div>
-            ) : products.length > 0 ? (
+            ) : error ? (
+              <div className="error">{error}</div>
+            ) : products.length === 0 ? (
+              <div className="no-products">
+                <h3>No products found</h3>
+                <p>Try adjusting your filters or search terms</p>
+                <button onClick={clearFilters} className="btn btn-primary">
+                  Clear Filters
+                </button>
+              </div>
+            ) : (
               <>
                 <div className="products-grid">
                   {products.map((product) => (
                     <ProductCard key={product._id} product={product} />
                   ))}
                 </div>
-
-                {/* Pagination */}
-                {totalPages > 1 && (
-                  <div className="pagination">
-                    <button
-                      onClick={() => handlePageChange(currentPage - 1)}
-                      disabled={currentPage === 1}
-                      className="btn btn-secondary"
-                    >
-                      Previous
-                    </button>
-
-                    <div className="page-numbers">
-                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                        <button
-                          key={page}
-                          onClick={() => handlePageChange(page)}
-                          className={`btn ${currentPage === page ? "btn-primary" : "btn-secondary"}`}
-                        >
-                          {page}
-                        </button>
-                      ))}
-                    </div>
-
-                    <button
-                      onClick={() => handlePageChange(currentPage + 1)}
-                      disabled={currentPage === totalPages}
-                      className="btn btn-secondary"
-                    >
-                      Next
-                    </button>
-                  </div>
-                )}
+                {renderPagination()}
               </>
-            ) : (
-              <div className="no-products">
-                <h3>No products found</h3>
-                <p>Try adjusting your filters or search terms.</p>
-              </div>
             )}
           </main>
         </div>

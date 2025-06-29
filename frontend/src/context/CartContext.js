@@ -4,38 +4,41 @@ import { createContext, useContext, useReducer, useEffect } from "react"
 
 const CartContext = createContext()
 
+const initialState = {
+  cartItems: JSON.parse(localStorage.getItem("cartItems")) || [],
+  shippingAddress: JSON.parse(localStorage.getItem("shippingAddress")) || {},
+  paymentMethod: localStorage.getItem("paymentMethod") || "",
+}
+
 const cartReducer = (state, action) => {
   switch (action.type) {
     case "ADD_TO_CART":
-      const existingItem = state.cartItems.find((item) => item.product === action.payload.product)
+      const item = action.payload
+      const existItem = state.cartItems.find((x) => x.product === item.product)
 
-      if (existingItem) {
+      if (existItem) {
         return {
           ...state,
-          cartItems: state.cartItems.map((item) =>
-            item.product === existingItem.product
-              ? { ...item, quantity: item.quantity + action.payload.quantity }
-              : item,
-          ),
+          cartItems: state.cartItems.map((x) => (x.product === existItem.product ? item : x)),
         }
       } else {
         return {
           ...state,
-          cartItems: [...state.cartItems, action.payload],
+          cartItems: [...state.cartItems, item],
         }
       }
 
     case "REMOVE_FROM_CART":
       return {
         ...state,
-        cartItems: state.cartItems.filter((item) => item.product !== action.payload),
+        cartItems: state.cartItems.filter((x) => x.product !== action.payload),
       }
 
     case "UPDATE_CART_QUANTITY":
       return {
         ...state,
         cartItems: state.cartItems.map((item) =>
-          item.product === action.payload.id ? { ...item, quantity: action.payload.quantity } : item,
+          item.product === action.payload.product ? { ...item, quantity: action.payload.quantity } : item,
         ),
       }
 
@@ -45,10 +48,16 @@ const cartReducer = (state, action) => {
         cartItems: [],
       }
 
-    case "LOAD_CART":
+    case "SAVE_SHIPPING_ADDRESS":
       return {
         ...state,
-        cartItems: action.payload,
+        shippingAddress: action.payload,
+      }
+
+    case "SAVE_PAYMENT_METHOD":
+      return {
+        ...state,
+        paymentMethod: action.payload,
       }
 
     default:
@@ -57,9 +66,7 @@ const cartReducer = (state, action) => {
 }
 
 export const CartProvider = ({ children }) => {
-  const [state, dispatch] = useReducer(cartReducer, {
-    cartItems: [],
-  })
+  const [state, dispatch] = useReducer(cartReducer, initialState)
 
   // Load cart from localStorage on mount
   useEffect(() => {
@@ -72,50 +79,81 @@ export const CartProvider = ({ children }) => {
     }
   }, [])
 
-  // Save cart to localStorage whenever it changes
-  useEffect(() => {
-    localStorage.setItem("cartItems", JSON.stringify(state.cartItems))
-  }, [state.cartItems])
-
+  // Add to cart
   const addToCart = (product, quantity = 1) => {
     dispatch({
       type: "ADD_TO_CART",
       payload: {
         product: product._id,
         name: product.name,
-        image: product.images[0],
+        image: product.images[0]?.url || "/placeholder.jpg",
         price: product.price,
-        countInStock: product.countInStock,
+        stock: product.stock,
         quantity,
       },
     })
   }
 
-  const removeFromCart = (id) => {
+  // Remove from cart
+  const removeFromCart = (productId) => {
     dispatch({
       type: "REMOVE_FROM_CART",
-      payload: id,
+      payload: productId,
     })
   }
 
-  const updateCartQuantity = (id, quantity) => {
-    dispatch({
-      type: "UPDATE_CART_QUANTITY",
-      payload: { id, quantity },
-    })
+  // Update quantity
+  const updateQuantity = (productId, quantity) => {
+    if (quantity <= 0) {
+      removeFromCart(productId)
+    } else {
+      dispatch({
+        type: "UPDATE_CART_QUANTITY",
+        payload: { product: productId, quantity },
+      })
+    }
   }
 
+  // Clear cart
   const clearCart = () => {
     dispatch({ type: "CLEAR_CART" })
   }
 
-  const getCartTotal = () => {
-    return state.cartItems.reduce((total, item) => total + item.price * item.quantity, 0)
+  // Save shipping address
+  const saveShippingAddress = (address) => {
+    dispatch({
+      type: "SAVE_SHIPPING_ADDRESS",
+      payload: address,
+    })
   }
 
-  const getCartItemsCount = () => {
-    return state.cartItems.reduce((total, item) => total + item.quantity, 0)
+  // Save payment method
+  const savePaymentMethod = (method) => {
+    dispatch({
+      type: "SAVE_PAYMENT_METHOD",
+      payload: method,
+    })
   }
+
+  // Calculate totals
+  const itemsPrice = state.cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0)
+
+  const shippingPrice = itemsPrice > 100 ? 0 : 10
+  const taxPrice = Number((0.15 * itemsPrice).toFixed(2))
+  const totalPrice = Number((itemsPrice + shippingPrice + taxPrice).toFixed(2))
+
+  // Save to localStorage whenever cart changes
+  useEffect(() => {
+    localStorage.setItem("cartItems", JSON.stringify(state.cartItems))
+  }, [state.cartItems])
+
+  useEffect(() => {
+    localStorage.setItem("shippingAddress", JSON.stringify(state.shippingAddress))
+  }, [state.shippingAddress])
+
+  useEffect(() => {
+    localStorage.setItem("paymentMethod", state.paymentMethod)
+  }, [state.paymentMethod])
 
   return (
     <CartContext.Provider
@@ -123,10 +161,14 @@ export const CartProvider = ({ children }) => {
         ...state,
         addToCart,
         removeFromCart,
-        updateCartQuantity,
+        updateQuantity,
         clearCart,
-        getCartTotal,
-        getCartItemsCount,
+        saveShippingAddress,
+        savePaymentMethod,
+        itemsPrice,
+        shippingPrice,
+        taxPrice,
+        totalPrice,
       }}
     >
       {children}
