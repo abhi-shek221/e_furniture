@@ -1,16 +1,16 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
-import { useCart } from "../context/CartContext"
-import { useAuth } from "../context/AuthContext"
-import { toast } from "react-toastify"
-import api from "../services/api"
-import "./Checkout.css"
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useCart } from "../context/CartContext";
+import { useAuth } from "../context/AuthContext";
+import { toast } from "react-toastify";
+import api from "../services/api";
+import "./Checkout.css";
 
 const Checkout = () => {
-  const navigate = useNavigate()
-  const { user } = useAuth()
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const {
     cartItems,
     shippingAddress,
@@ -22,43 +22,45 @@ const Checkout = () => {
     shippingPrice,
     taxPrice,
     totalPrice,
-  } = useCart()
+  } = useCart();
 
-  const [currentStep, setCurrentStep] = useState(1)
-  const [loading, setLoading] = useState(false)
+  const [currentStep, setCurrentStep] = useState(1);
+  const [loading, setLoading] = useState(false);
 
-  // Shipping form state
+  // Shipping form state with safe defaults
   const [shippingForm, setShippingForm] = useState({
-    fullName: shippingAddress.fullName || user?.name || "",
-    address: shippingAddress.address || "",
-    city: shippingAddress.city || "",
-    state: shippingAddress.state || "",
-    zipCode: shippingAddress.zipCode || "",
-    country: shippingAddress.country || "United States",
-    phone: shippingAddress.phone || user?.phone || "",
-  })
+    fullName: shippingAddress?.fullName || user?.name || "",
+    address: shippingAddress?.address || "",
+    city: shippingAddress?.city || "",
+    state: shippingAddress?.state || "",
+    zipCode: shippingAddress?.zipCode || "",
+    country: shippingAddress?.country || "United States",
+    phone: shippingAddress?.phone || user?.phone || "",
+  });
 
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(paymentMethod || "cod")
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(
+    paymentMethod || "cod"
+  );
 
   const handleShippingSubmit = (e) => {
-    e.preventDefault()
-    saveShippingAddress(shippingForm)
-    setCurrentStep(2)
-  }
+    e.preventDefault();
+    saveShippingAddress(shippingForm);
+    setCurrentStep(2);
+  };
 
   const handlePaymentSubmit = (e) => {
-    e.preventDefault()
-    savePaymentMethod(selectedPaymentMethod)
-    setCurrentStep(3)
-  }
+    e.preventDefault();
+    savePaymentMethod(selectedPaymentMethod);
+    setCurrentStep(3);
+  };
 
   const handlePlaceOrder = async () => {
     if (cartItems.length === 0) {
-      toast.error("Your cart is empty")
-      return
+      toast.error("Your cart is empty");
+      return;
     }
 
-    setLoading(true)
+    setLoading(true);
     try {
       const orderData = {
         orderItems: cartItems.map((item) => ({
@@ -74,19 +76,19 @@ const Checkout = () => {
         taxPrice: taxPrice,
         shippingPrice: shippingPrice,
         totalPrice: totalPrice,
-      }
+      };
 
-      const response = await api.post("/orders", orderData)
+      const response = await api.post("/orders", orderData);
 
-      clearCart()
-      toast.success("Order placed successfully!")
-      navigate(`/orders/${response.data.order._id}`)
+      clearCart();
+      toast.success("Order placed successfully!");
+      navigate(`/orders/${response.data.order._id}`);
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to place order")
+      toast.error(error.response?.data?.message || "Failed to place order");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const renderStepIndicator = () => (
     <div className="step-indicator">
@@ -103,7 +105,7 @@ const Checkout = () => {
         <div className="step-label">Review</div>
       </div>
     </div>
-  )
+  );
 
   const renderShippingStep = () => (
     <div className="checkout-step">
@@ -115,7 +117,9 @@ const Checkout = () => {
             <input
               type="text"
               value={shippingForm.fullName}
-              onChange={(e) => setShippingForm({ ...shippingForm, fullName: e.target.value })}
+              onChange={(e) =>
+                setShippingForm({ ...shippingForm, fullName: e.target.value })
+              }
               required
               className="form-control"
             />
@@ -125,7 +129,9 @@ const Checkout = () => {
             <input
               type="tel"
               value={shippingForm.phone}
-              onChange={(e) => setShippingForm({ ...shippingForm, phone: e.target.value })}
+              onChange={(e) =>
+                setShippingForm({ ...shippingForm, phone: e.target.value })
+              }
               className="form-control"
             />
           </div>
@@ -136,7 +142,9 @@ const Checkout = () => {
           <input
             type="text"
             value={shippingForm.address}
-            onChange={(e) => setShippingForm({ ...shippingForm, address: e.target.value })}
+            onChange={(e) =>
+              setShippingForm({ ...shippingForm, address: e.target.value })
+            }
             required
             className="form-control"
           />
@@ -148,7 +156,9 @@ const Checkout = () => {
             <input
               type="text"
               value={shippingForm.city}
-              onChange={(e) => setShippingForm({ ...shippingForm, city: e.target.value })}
+              onChange={(e) =>
+                setShippingForm({ ...shippingForm, city: e.target.value })
+              }
               required
               className="form-control"
             />
@@ -158,7 +168,9 @@ const Checkout = () => {
             <input
               type="text"
               value={shippingForm.state}
-              onChange={(e) => setShippingForm({ ...shippingForm, state: e.target.value })}
+              onChange={(e) =>
+                setShippingForm({ ...shippingForm, state: e.target.value })
+              }
               required
               className="form-control"
             />
@@ -168,7 +180,9 @@ const Checkout = () => {
             <input
               type="text"
               value={shippingForm.zipCode}
-              onChange={(e) => setShippingForm({ ...shippingForm, zipCode: e.target.value })}
+              onChange={(e) =>
+                setShippingForm({ ...shippingForm, zipCode: e.target.value })
+              }
               required
               className="form-control"
             />
@@ -179,7 +193,9 @@ const Checkout = () => {
           <label>Country *</label>
           <select
             value={shippingForm.country}
-            onChange={(e) => setShippingForm({ ...shippingForm, country: e.target.value })}
+            onChange={(e) =>
+              setShippingForm({ ...shippingForm, country: e.target.value })
+            }
             required
             className="form-control"
           >
@@ -195,7 +211,7 @@ const Checkout = () => {
         </button>
       </form>
     </div>
-  )
+  );
 
   const renderPaymentStep = () => (
     <div className="checkout-step">
@@ -212,7 +228,9 @@ const Checkout = () => {
             />
             <div className="payment-option-content">
               <div className="payment-title">Cash on Delivery</div>
-              <div className="payment-description">Pay when you receive your order</div>
+              <div className="payment-description">
+                Pay when you receive your order
+              </div>
             </div>
           </label>
 
@@ -226,7 +244,9 @@ const Checkout = () => {
             />
             <div className="payment-option-content">
               <div className="payment-title">PayPal</div>
-              <div className="payment-description">Pay securely with your PayPal account</div>
+              <div className="payment-description">
+                Pay securely with your PayPal account
+              </div>
             </div>
           </label>
 
@@ -240,13 +260,19 @@ const Checkout = () => {
             />
             <div className="payment-option-content">
               <div className="payment-title">Credit/Debit Card</div>
-              <div className="payment-description">Pay with Visa, MasterCard, or American Express</div>
+              <div className="payment-description">
+                Pay with Visa, MasterCard, or American Express
+              </div>
             </div>
           </label>
         </div>
 
         <div className="form-actions">
-          <button type="button" onClick={() => setCurrentStep(1)} className="btn btn-secondary">
+          <button
+            type="button"
+            onClick={() => setCurrentStep(1)}
+            className="btn btn-secondary"
+          >
             Back to Shipping
           </button>
           <button type="submit" className="btn btn-primary">
@@ -255,7 +281,7 @@ const Checkout = () => {
         </div>
       </form>
     </div>
-  )
+  );
 
   const renderReviewStep = () => (
     <div className="checkout-step">
@@ -297,27 +323,43 @@ const Checkout = () => {
         <div className="order-items">
           {cartItems.map((item) => (
             <div key={item.product} className="order-item">
-              <img src={item.image || "/placeholder.svg"} alt={item.name} className="item-image" />
+              <img
+                src={item.image || "/placeholder.svg"}
+                alt={item.name}
+                className="item-image"
+              />
               <div className="item-details">
                 <div className="item-name">{item.name}</div>
                 <div className="item-quantity">Qty: {item.quantity}</div>
               </div>
-              <div className="item-price">${(item.price * item.quantity).toFixed(2)}</div>
+              <div className="item-price">
+                ${(item.price * item.quantity).toFixed(2)}
+              </div>
             </div>
           ))}
         </div>
       </div>
 
       <div className="form-actions">
-        <button type="button" onClick={() => setCurrentStep(2)} className="btn btn-secondary">
+        <button
+          type="button"
+          onClick={() => setCurrentStep(2)}
+          className="btn btn-secondary"
+        >
           Back to Payment
         </button>
-        <button onClick={handlePlaceOrder} disabled={loading} className="btn btn-primary place-order-btn">
-          {loading ? "Placing Order..." : `Place Order - $${totalPrice.toFixed(2)}`}
+        <button
+          onClick={handlePlaceOrder}
+          disabled={loading}
+          className="btn btn-primary place-order-btn"
+        >
+          {loading
+            ? "Placing Order..."
+            : `Place Order - $${totalPrice.toFixed(2)}`}
         </button>
       </div>
     </div>
-  )
+  );
 
   return (
     <div className="checkout-page">
@@ -339,13 +381,20 @@ const Checkout = () => {
               <h3>Order Summary</h3>
 
               <div className="summary-row">
-                <span>Items ({cartItems.reduce((acc, item) => acc + item.quantity, 0)}):</span>
+                <span>
+                  Items (
+                  {cartItems.reduce((acc, item) => acc + item.quantity, 0)}):
+                </span>
                 <span>${itemsPrice.toFixed(2)}</span>
               </div>
 
               <div className="summary-row">
                 <span>Shipping:</span>
-                <span>{shippingPrice === 0 ? "Free" : `$${shippingPrice.toFixed(2)}`}</span>
+                <span>
+                  {shippingPrice === 0
+                    ? "Free"
+                    : `$${shippingPrice.toFixed(2)}`}
+                </span>
               </div>
 
               <div className="summary-row">
@@ -364,7 +413,7 @@ const Checkout = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Checkout
+export default Checkout;

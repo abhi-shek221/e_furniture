@@ -1,119 +1,170 @@
-"use client"
-import { Link } from "react-router-dom"
-import { FaHeart, FaShoppingCart, FaStar } from "react-icons/fa"
-import { useAuth } from "../context/AuthContext"
-import { useCart } from "../context/CartContext"
-import { toast } from "react-toastify"
-import api from "../services/api"
-import "./ProductCard.css"
+"use client";
+import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { useCart } from "../context/CartContext";
+import { toast } from "react-toastify";
+import "./ProductCard.css";
 
 const ProductCard = ({ product }) => {
-  const { isAuthenticated } = useAuth()
-  const { addToCart } = useCart()
+  const { isAuthenticated } = useAuth();
+  const { addToCart } = useCart();
 
-  const handleAddToCart = () => {
+  const handleAddToCart = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
     if (product.stock === 0) {
-      toast.error("Product is out of stock")
-      return
+      toast.error("Product is out of stock");
+      return;
     }
-    addToCart(product)
-    toast.success("Product added to cart")
-  }
 
-  const handleAddToWishlist = async () => {
+    addToCart(product);
+    toast.success("Product added to cart!");
+  };
+
+  const handleAddToWishlist = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
     if (!isAuthenticated) {
-      toast.error("Please login to add to wishlist")
-      return
+      toast.error("Please login to add to wishlist");
+      return;
     }
 
-    try {
-      await api.post(`/users/wishlist/${product._id}`)
-      toast.success("Product added to wishlist")
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to add to wishlist")
-    }
-  }
+    toast.success("Added to wishlist!");
+  };
 
   const renderStars = (rating) => {
-    const stars = []
-    const fullStars = Math.floor(rating)
-    const hasHalfStar = rating % 1 !== 0
+    const stars = [];
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 !== 0;
 
     for (let i = 0; i < fullStars; i++) {
-      stars.push(<FaStar key={i} className="star filled" />)
+      stars.push(
+        <span key={i} className="star filled">
+          ★
+        </span>
+      );
     }
 
     if (hasHalfStar) {
-      stars.push(<FaStar key="half" className="star half" />)
+      stars.push(
+        <span key="half" className="star half">
+          ★
+        </span>
+      );
     }
 
-    const emptyStars = 5 - Math.ceil(rating)
+    const emptyStars = 5 - Math.ceil(rating);
     for (let i = 0; i < emptyStars; i++) {
-      stars.push(<FaStar key={`empty-${i}`} className="star" />)
+      stars.push(
+        <span key={`empty-${i}`} className="star">
+          ☆
+        </span>
+      );
     }
 
-    return stars
-  }
+    return stars;
+  };
 
   const discountPercentage = product.originalPrice
-    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
-    : 0
+    ? Math.round(
+        ((product.originalPrice - product.price) / product.originalPrice) * 100
+      )
+    : 0;
 
   return (
     <div className="product-card">
-      <div className="product-image">
-        <Link to={`/products/${product._id}`}>
+      <div className="product-image-container">
+        <Link to={`/products/${product._id}`} className="product-image-link">
           <img
-            src={product.images[0]?.url || "/placeholder.jpg"}
+            src={
+              product.images && product.images[0]
+                ? product.images[0]
+                : "/placeholder.svg?height=300&width=300"
+            }
             alt={product.name}
+            className="product-image"
             onError={(e) => {
-              e.target.src = "/placeholder.jpg"
+              e.target.src = "/placeholder.svg?height=300&width=300";
             }}
           />
         </Link>
-        {discountPercentage > 0 && <span className="discount-badge">-{discountPercentage}%</span>}
-        {product.stock === 0 && <span className="stock-badge out-of-stock">Out of Stock</span>}
-        {product.isFeatured && <span className="stock-badge featured">Featured</span>}
-        <div className="product-actions">
-          <button className="action-btn wishlist-btn" onClick={handleAddToWishlist} title="Add to Wishlist">
-            <FaHeart />
-          </button>
+
+        {/* Top Left Badges */}
+        {(discountPercentage > 0 || product.isFeatured) && (
+          <div className="top-left-badges">
+            {discountPercentage > 0 && (
+              <span className="badge discount-badge">
+                -{discountPercentage}%
+              </span>
+            )}
+            {product.isFeatured && (
+              <span className="badge featured-badge">Featured</span>
+            )}
+          </div>
+        )}
+
+        {/* Top Right Actions */}
+        <div className="top-right-actions">
           <button
-            className="action-btn cart-btn"
-            onClick={handleAddToCart}
-            disabled={product.stock === 0}
-            title="Add to Cart"
+            className="action-btn wishlist-btn"
+            onClick={handleAddToWishlist}
+            title="Add to Wishlist"
           >
-            <FaShoppingCart />
+            ♡
+          </button>
+          <button className="action-btn quick-view-btn" title="Quick View">
+            👁
           </button>
         </div>
+
+        {/* Out of Stock Overlay */}
+        {product.stock === 0 && (
+          <div className="out-of-stock-overlay">
+            <span className="out-of-stock-text">Out of Stock</span>
+          </div>
+        )}
       </div>
 
-      <div className="product-info">
-        <div className="product-category">{product.category}</div>
-        <Link to={`/products/${product._id}`} className="product-name">
-          <h3>{product.name}</h3>
+      <div className="product-content">
+        <Link to={`/products/${product._id}`} className="product-info-link">
+          <div className="product-category">{product.category}</div>
+          <h3 className="product-name">{product.name}</h3>
+
+          <div className="product-rating">
+            <div className="stars">{renderStars(product.rating)}</div>
+            <span className="rating-count">({product.numReviews})</span>
+          </div>
+
+          <div className="product-price">
+            <span className="current-price">${product.price}</span>
+            {product.originalPrice && (
+              <span className="original-price">${product.originalPrice}</span>
+            )}
+          </div>
+
+          <div className="product-stock">
+            {product.stock > 0 ? (
+              <span className="in-stock">{product.stock} in stock</span>
+            ) : (
+              <span className="out-of-stock-status">Out of stock</span>
+            )}
+          </div>
         </Link>
 
-        <div className="product-rating">
-          <div className="stars">{renderStars(product.rating)}</div>
-          <span className="rating-text">
-            ({product.numReviews} review{product.numReviews !== 1 ? "s" : ""})
-          </span>
-        </div>
-
-        <div className="product-price">
-          <span className="current-price">${product.price}</span>
-          {product.originalPrice && <span className="original-price">${product.originalPrice}</span>}
-        </div>
-
-        <div className="product-meta">
-          <span className="stock-info">{product.stock > 0 ? `${product.stock} in stock` : "Out of stock"}</span>
-          {product.salesCount > 0 && <span className="sales-count">{product.salesCount} sold</span>}
+        <div className="product-actions">
+          <button
+            className="add-to-cart-btn"
+            onClick={handleAddToCart}
+            disabled={product.stock === 0}
+          >
+            {product.stock === 0 ? "Out of Stock" : "Add to Cart"}
+          </button>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default ProductCard
+export default ProductCard;

@@ -1,23 +1,31 @@
-"use client"
-import { Link, useNavigate } from "react-router-dom"
-import { FaTrash, FaMinus, FaPlus, FaShoppingBag } from "react-icons/fa"
-import { useCart } from "../context/CartContext"
-import { useAuth } from "../context/AuthContext"
-import "./Cart.css"
+"use client";
+import { Link, useNavigate } from "react-router-dom";
+import { FaTrash, FaMinus, FaPlus, FaShoppingBag } from "react-icons/fa";
+import { useCart } from "../context/CartContext";
+import { useAuth } from "../context/AuthContext";
+import "./Cart.css";
 
 const Cart = () => {
-  const { cartItems, removeFromCart, updateQuantity, clearCart, itemsPrice, shippingPrice, taxPrice, totalPrice } =
-    useCart()
-  const { isAuthenticated } = useAuth()
-  const navigate = useNavigate()
+  const {
+    cartItems,
+    removeFromCart,
+    updateQuantity,
+    clearCart,
+    itemsPrice,
+    shippingPrice,
+    taxPrice,
+    totalPrice,
+  } = useCart();
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
   const handleCheckout = () => {
     if (!isAuthenticated) {
-      navigate("/login?redirect=checkout")
+      navigate("/login?redirect=checkout");
     } else {
-      navigate("/checkout")
+      navigate("/checkout");
     }
-  }
+  };
 
   if (cartItems.length === 0) {
     return (
@@ -33,7 +41,7 @@ const Cart = () => {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -56,7 +64,7 @@ const Cart = () => {
                     src={item.image || "/placeholder.svg"}
                     alt={item.name}
                     onError={(e) => {
-                      e.target.src = "/placeholder.jpg"
+                      e.target.src = "/placeholder.jpg";
                     }}
                   />
                 </div>
@@ -66,13 +74,19 @@ const Cart = () => {
                     <h3>{item.name}</h3>
                   </Link>
                   <div className="item-price">${item.price}</div>
-                  <div className="item-stock">{item.stock > 0 ? `${item.stock} in stock` : "Out of stock"}</div>
+                  <div className="item-stock">
+                    {item.countInStock > 0
+                      ? `${item.countInStock} in stock`
+                      : "Out of stock"}
+                  </div>
                 </div>
 
                 <div className="item-quantity">
                   <div className="quantity-controls">
                     <button
-                      onClick={() => updateQuantity(item.product, item.quantity - 1)}
+                      onClick={() =>
+                        updateQuantity(item.product, item.quantity - 1)
+                      }
                       disabled={item.quantity <= 1}
                       className="quantity-btn"
                     >
@@ -80,8 +94,10 @@ const Cart = () => {
                     </button>
                     <span className="quantity-display">{item.quantity}</span>
                     <button
-                      onClick={() => updateQuantity(item.product, item.quantity + 1)}
-                      disabled={item.quantity >= item.stock}
+                      onClick={() =>
+                        updateQuantity(item.product, item.quantity + 1)
+                      }
+                      disabled={item.quantity >= item.countInStock}
                       className="quantity-btn"
                     >
                       <FaPlus />
@@ -89,9 +105,15 @@ const Cart = () => {
                   </div>
                 </div>
 
-                <div className="item-total">${(item.price * item.quantity).toFixed(2)}</div>
+                <div className="item-total">
+                  ${(item.price * item.quantity).toFixed(2)}
+                </div>
 
-                <button onClick={() => removeFromCart(item.product)} className="remove-btn" title="Remove item">
+                <button
+                  onClick={() => removeFromCart(item.product)}
+                  className="remove-btn"
+                  title="Remove item"
+                >
                   <FaTrash />
                 </button>
               </div>
@@ -104,13 +126,20 @@ const Cart = () => {
               <h2>Order Summary</h2>
 
               <div className="summary-row">
-                <span>Items ({cartItems.reduce((acc, item) => acc + item.quantity, 0)}):</span>
+                <span>
+                  Items (
+                  {cartItems.reduce((acc, item) => acc + item.quantity, 0)}):
+                </span>
                 <span>${itemsPrice.toFixed(2)}</span>
               </div>
 
               <div className="summary-row">
                 <span>Shipping:</span>
-                <span>{shippingPrice === 0 ? "Free" : `$${shippingPrice.toFixed(2)}`}</span>
+                <span>
+                  {shippingPrice === 0
+                    ? "Free"
+                    : `$${shippingPrice.toFixed(2)}`}
+                </span>
               </div>
 
               <div className="summary-row">
@@ -126,10 +155,15 @@ const Cart = () => {
               </div>
 
               {shippingPrice > 0 && (
-                <div className="shipping-notice">Add ${(100 - itemsPrice).toFixed(2)} more for free shipping!</div>
+                <div className="shipping-notice">
+                  Add ${(100 - itemsPrice).toFixed(2)} more for free shipping!
+                </div>
               )}
 
-              <button onClick={handleCheckout} className="btn btn-primary checkout-btn">
+              <button
+                onClick={handleCheckout}
+                className="btn btn-primary checkout-btn"
+              >
                 Proceed to Checkout
               </button>
 
@@ -141,7 +175,7 @@ const Cart = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Cart
+export default Cart;
